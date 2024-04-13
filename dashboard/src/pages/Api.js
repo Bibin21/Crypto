@@ -19,7 +19,11 @@ import LineChart from '../components/charts/LineChart';
 import AreaChart from '../components/charts/AreaChart';
 import Spacer from '../components/Spacer';
 import Transactions from '../components/transactions';
- 
+import toast, { Toaster } from 'react-hot-toast';
+
+
+
+
 
 const Api = () => {
   const ABI =[{
@@ -41,6 +45,8 @@ const Api = () => {
     "type": "function"
   }];
   const web3 = new Web3(window.ethereum);
+  const [count,setCount]=useState(0);
+
   const [address,setAddress]=useState('');
   const [transaction,setTransaction]=useState({});
   const [balance,setBalance]=useState(0);
@@ -55,6 +61,8 @@ const Api = () => {
         console.log(account);
         if(account)
         {
+          if(count==0)
+          toast.success('Wallet Connected..')
       //  const balance= await window.ethereum.request({
       //     "method": "eth_getBalance",
       //     "params": [
@@ -62,13 +70,14 @@ const Api = () => {
       //      "latest"
       //     ]
       //   });
+
       const balance = await web3.eth.getBalance(account[0]);
       setBalance(web3.utils.fromWei(balance, 'ether'));
-  
+   
   
         }
     } } catch (error) {
-      console.error(error);
+      toast.error(error.message);
     }
   };
 
@@ -83,7 +92,7 @@ const LoadBalance = () => {
   document.getElementById('div_balance').style.display = 'block';
 }
 const Loadtrans = () => {
-  fetch("https://api-sepolia.etherscan.io/api?module=account&action=tokentx&address="+address+"&page=1&offset=100&startblock=0&endblock=99999999&sort=asc&apikey=NFE4WDDGG3CS7NQAS5XKIY9U2VFJWE5NWM", {
+  fetch("https://api-sepolia.etherscan.io/api?module=account&action=txlist&address="+address+"&page=1&offset=100&startblock=0&endblock=99999999&sort=asc&apikey=NFE4WDDGG3CS7NQAS5XKIY9U2VFJWE5NWM", {
     method :"GET",
 }).then((res) => res.json())
             .then((json) => {
@@ -107,7 +116,11 @@ const Loadbroadcast = () => {
                 document.getElementById('div_broadcast').innerHTML = '<font color="White">'+JSON.stringify(json)+'</font>';
       });
 }
-
+const refreshpage = async()=>{
+setCount(count=>count+1)
+  connectToMetaMask();
+  Loadtrans();
+} 
 const Loadmine = () => {
    fetch("http://localhost:4000/mine", {
      
@@ -135,10 +148,16 @@ const Loadmine = () => {
 }
 
 const handleSubmit = async(e) => {
+  try{
         e.preventDefault();
         const receipient = e.target.receipient.value;
         const amount = e.target.amount.value;
-
+ if(receipient =='' || amount=='')
+ {
+  toast.error("Missing Details")
+  return;
+ }
+ 
 console.log(address[0])
 console.log(receipient)
 const hexamount=amount.toString(16)
@@ -148,20 +167,34 @@ console.log(hexamount)
 const ethValue = Web3.utils.toWei(
 amount.toString(),"ether"); 
 
-const receipt = await web3.eth.sendTransaction({
+
+const receipt =  web3.eth.sendTransaction({
   from: address[0],
-  to: '0xe4beef667408b99053dc147ed19592ada0d77f59',
+  to: receipient,
   value: String(amount*1000000000000000000),
-  gas: '300000',
+  gas: '100000',
   // other transaction's params
-}).then((txHash) => console.log(txHash))
-        .catch((error) => console.error(error));
-     
+}).then(()=>{setCount(count=>count+1)})
+toast.promise(receipt, {
+  loading: 'Transferring.....',
+  success: 'Transfer Successfull',
+  error: 'Error during transaction or user cancelled the request',
+});
+
+}
+
+catch(error)
+{
+  console.log(error)
+  toast.error(error.message);
+}
+
       
     }
+ 
   useEffect(()=>{
     connectToMetaMask();
-  },[]);
+  },[])
   const theme = useTheme();
 
   return (
@@ -233,9 +266,17 @@ const receipt = await web3.eth.sendTransaction({
 
  </div>
 
+ <div class="mb-3">
+      <button class="btn btn-primary" id="connectButton" onClick={refreshpage}>
+        Refresh
+      </button>
+
+ </div>
+
         </Container>
       </Box>
       <Spacer sx={{ pt: 7 }} />
+      <Toaster style={{}}   position="bottom-center" />
     </>
   );
 };
