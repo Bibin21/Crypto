@@ -131,7 +131,7 @@ const Header = ({ onSidebarOpen }) => {
             <CustomButton target='_blank' href='http://localhost:3006/' icon={<DashboardIcon />} text='NFT MarketPlace' />
             <CustomButton href='#' icon={<HelpIcon />} text='About' />
             <CustomButton href='#' icon={<EmailIcon />} text='Contact' />
-            <CustomButton href='/Api' icon={<SettingsIcon />} text='API' />
+            <CustomButton href='/Api' icon={<SettingsIcon />} text='Transfer' />
             
           </Box>
           <Divider

@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import { useTheme } from '@mui/material/styles';
 import { Helmet } from 'react-helmet-async';
-
+import {Web3} from 'web3';
 import DashboardHeader from '../components/DashboardHeader';
 import Categories from '../components/statistics/Categories';
 import Exchanges from '../components/statistics/Exchanges';
@@ -18,35 +18,77 @@ import PolarAreaChart from '../components/charts/PolarAreaChart';
 import LineChart from '../components/charts/LineChart';
 import AreaChart from '../components/charts/AreaChart';
 import Spacer from '../components/Spacer';
+import Transactions from '../components/transactions';
+ 
 
+const Api = () => {
+  const ABI =[{
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_owner",
+        "type": "address"
+      }
+    ],
+    "name": "balanceOf",
+    "outputs": [
+      {
+        "name": "balance",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "type": "function"
+  }];
+  const web3 = new Web3(window.ethereum);
+  const [address,setAddress]=useState('');
+  const [transaction,setTransaction]=useState({});
+  const [balance,setBalance]=useState(0);
+  const [fetchstatus,setFetchstatus]=useState(false);
   const connectToMetaMask = async () => {
     try {
       // Check if MetaMask is installed
       if (window.ethereum) {
         // Request account access if needed
-        await window.ethereum.request({ method: 'eth_requestAccounts' });
-        console.log('MetaMask is connected!');
-      } else {
-        console.log('MetaMask not detected. Please install MetaMask.');
-      }
-    } catch (error) {
+       const account= await window.ethereum.request({ method: 'eth_requestAccounts' });
+       setAddress(account);
+        console.log(account);
+        if(account)
+        {
+      //  const balance= await window.ethereum.request({
+      //     "method": "eth_getBalance",
+      //     "params": [
+      //      account[0],
+      //      "latest"
+      //     ]
+      //   });
+      const balance = await web3.eth.getBalance(account[0]);
+      setBalance(web3.utils.fromWei(balance, 'ether'));
+  
+  
+        }
+    } } catch (error) {
       console.error(error);
     }
   };
 
 const Loadkey = () => {
-   fetch("http://localhost:4000/publicKey")
-      .then((res) => res.json())
-            .then((json) => {
-                document.getElementById('div_key').innerHTML = '<font color="White">'+json.PublicKey+'</font>';
-      });
+
+                document.getElementById('div_key').style.display = 'block';
+           
+    
 }
 
+const LoadBalance = () => {
+  document.getElementById('div_balance').style.display = 'block';
+}
 const Loadtrans = () => {
-   fetch("http://localhost:4000/transactions")
-      .then((res) => res.json())
+  fetch("https://api-sepolia.etherscan.io/api?module=account&action=tokentx&address="+address+"&page=1&offset=100&startblock=0&endblock=99999999&sort=asc&apikey=NFE4WDDGG3CS7NQAS5XKIY9U2VFJWE5NWM", {
+    method :"GET",
+}).then((res) => res.json())
             .then((json) => {
-                document.getElementById('div_trans').innerHTML = '<font color="White">'+JSON.stringify(json)+'</font>';
+              setTransaction(json.result);
+              setFetchstatus(true);
       });
 }
 
@@ -92,42 +134,34 @@ const Loadmine = () => {
       });
 }
 
-const handleSubmit = (e) => {
+const handleSubmit = async(e) => {
         e.preventDefault();
-        console.log("Submitted");
         const receipient = e.target.receipient.value;
         const amount = e.target.amount.value;
 
-        var data = {
-            receipient : receipient,
-            amount : amount
-        }
-        /*var data = JSON.stringify({
-            receipient : receipient,
-            amount : amount
-        });*/
-        console.log(data);
-        
-        fetch("http://localhost:4000/transact", {
-            method :"POST",
-            mode :"cors",
-            body : data,
-            /*headers: {
-              "Content-type": "application/json; charset=UTF-8"
-            }*/
-        }).then((response) => {
-            console.log(response);
-            fetch("http://localhost:4000/transactions")
-              .then((res) => res.json())
-                .then((json) => {
-                  document.getElementById('div_transact').innerHTML = '<font color="White">'+JSON.stringify(json)+'</font>';
-            });
-            
-            return response.json();
-        })
-    }
+console.log(address[0])
+console.log(receipient)
+const hexamount=amount.toString(16)
+console.log(hexamount)
 
-const Api = () => {
+//convert the integer into Ehter standard
+const ethValue = Web3.utils.toWei(
+amount.toString(),"ether"); 
+
+const receipt = await web3.eth.sendTransaction({
+  from: address[0],
+  to: '0xe4beef667408b99053dc147ed19592ada0d77f59',
+  value: String(amount*1000000000000000000),
+  gas: '300000',
+  // other transaction's params
+}).then((txHash) => console.log(txHash))
+        .catch((error) => console.error(error));
+     
+      
+    }
+  useEffect(()=>{
+    connectToMetaMask();
+  },[]);
   const theme = useTheme();
 
   return (
@@ -146,20 +180,25 @@ const Api = () => {
           
        		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" />               
                 <div>
-        	    	<button onClick={Loadkey} type="button" id="btn_key" class="btn btn-primary">Get your Public key</button>
+        	    	<button onClick={Loadkey} type="button" id="btn_key" class="btn btn-primary">Get your Wallet Address</button>
         	    	</div>
-        	    	<div id="div_key"></div>
+        	    	<div id="div_key" style={{display:"none",color:"white"}}>{address!='' ? address : "Wallet Not Connected"}</div>
         	    	<br />
+                <div>
+        	    	<button onClick={LoadBalance} type="button" class="btn btn-primary">Get Balance</button>
+        	    	</div>
+        	    	<div id="div_balance" style={{display:"none",color:"white"}}>{balance}</div>
         	    	<div>
+                <br />
 <button onClick={Loadtrans} type="button" id="btn_trans" class="btn btn-primary">Get Transactions List</button>
 </div>
-<div id="div_trans"></div>
+<div id="div_trans">{ fetchstatus && <Transactions transactions={transaction} address={address} />}</div>
 <br />
 
-<div>
+{/* <div>
 <button onClick={Loadblocks} type="button" id="btn_blocks" class="btn btn-primary">Get Blocks Info</button>
-</div>
-<div id="div_blocks"></div>
+</div> */}
+{/* <div id="div_blocks"></div>
 <br />
 
 <div>
@@ -170,20 +209,20 @@ const Api = () => {
 
 <div>
 <button onClick={Loadmine} type="button" id="btn_mine" class="btn btn-primary">Mine (Add blocks to blockchain) </button>
-</div>
+</div> */}
 <div id="div_mine"></div>
 <br /><br /><br />
-<h4><font color="White">Transact online</font></h4>
+<h4><font color="White">Transfer Coins</font></h4>
 <form id="frmtransact" method="post" onSubmit={handleSubmit}>
   <div class="mb-3 mt-3">
     <label for="receipient" class="form-label">Receipient:</label>
-    <input class="form-control" id="receipient" placeholder="Enter receipient public address" name="receipient" />
+    <input class="form-control" id="receipient" placeholder="Enter recipient wallet address" name="receipient" />
   </div>
   <div class="mb-3">
     <label for="pwd" class="form-label">Amount:</label>
     <input class="form-control" id="amount" placeholder="Enter amount" name="amount" />
   </div><br />
-  <button type="submit" class="btn btn-primary">Submit</button>
+  <button type="submit" class="btn btn-primary">Transfer</button>
 </form>
 <div id="div_transact"></div>
 <br />
