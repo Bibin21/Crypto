@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Blockchain API Interface</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+  
+</head>
+<body>
+<h1 style="margin-top:30px">Blockchain API Interface</h1>
+<div style="margin-top:30px">
+<button type="button" id="btn_key" class="btn btn-primary">Get your Public key</button>
+</div>
+<div id="div_key"></div>
+
+<div style="margin-top:30px">
+<button type="button" id="btn_trans" class="btn btn-primary">Get Transactions List</button>
+</div>
+<div id="div_trans"></div>
+
+<div style="margin-top:30px">
+<button type="button" id="btn_blocks" class="btn btn-primary">Get Blocks Info</button>
+</div>
+<div id="div_blocks"></div>
+
+<div style="margin-top:30px">
+<button type="button" id="btn_broadcast" class="btn btn-primary">Mine blockchain and clears old transaction pool then broadcast new chain</button>
+</div>
+<div id="div_broadcast"></div>
+
+<div style="margin-top:30px">
+<button type="button" id="btn_mine" class="btn btn-primary">Mine (Add blocks to blockchain) </button>
+</div>
+<div id="div_mine"></div>
+
+<h4 style="margin-top:20px">Transact online</h4>
+<form id="frmtransact" method="post" style="margin-bottom:50px;">
+  <div class="mb-3 mt-3">
+    <label for="receipient" class="form-label">Receipient:</label>
+    <input class="form-control" id="receipient" placeholder="Enter receipient public address" name="receipient">
+  </div>
+  <div class="mb-3">
+    <label for="pwd" class="form-label">Amount:</label>
+    <input class="form-control" id="amount" placeholder="Enter amount" name="amount">
+  </div>
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+<div id="div_transact"></div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="js/script.js"></script>
+</body>
+</html>
